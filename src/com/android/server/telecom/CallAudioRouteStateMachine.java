@@ -427,9 +427,12 @@ public class CallAudioRouteStateMachine extends StateMachine {
                 case SWITCH_SPEAKER:
                 case USER_SWITCH_SPEAKER:
                     setSpeakerphoneOn(true);
-                    // fall through
-                case SPEAKER_ON:
                     transitionTo(mActiveSpeakerRoute);
+                    return HANDLED;
+                case SPEAKER_ON:
+                    if (isSpeakerPhoneOn()) {
+                        transitionTo(mActiveSpeakerRoute);
+                    }
                     return HANDLED;
                 case SWITCH_FOCUS:
                     if (msg.arg1 == NO_FOCUS) {
@@ -632,9 +635,12 @@ public class CallAudioRouteStateMachine extends StateMachine {
                 case SWITCH_SPEAKER:
                 case USER_SWITCH_SPEAKER:
                     setSpeakerphoneOn(true);
-                    // fall through
-                case SPEAKER_ON:
                     transitionTo(mActiveSpeakerRoute);
+                    return HANDLED;
+                case SPEAKER_ON:
+                    if (isSpeakerPhoneOn()) {
+                        transitionTo(mActiveSpeakerRoute);
+                    }
                     return HANDLED;
                 case SWITCH_FOCUS:
                     if (msg.arg1 == NO_FOCUS) {
@@ -895,10 +901,14 @@ public class CallAudioRouteStateMachine extends StateMachine {
                     // fall through
                 case SWITCH_SPEAKER:
                     setSpeakerphoneOn(true);
-                    // fall through
-                case SPEAKER_ON:
                     setBluetoothOff();
                     transitionTo(mActiveSpeakerRoute);
+                    return HANDLED;
+                case SPEAKER_ON:
+                    if (isSpeakerPhoneOn()) {
+                        setBluetoothOff();
+                        transitionTo(mActiveSpeakerRoute);
+                    }
                     return HANDLED;
                 case SPEAKER_OFF:
                     return HANDLED;
@@ -999,9 +1009,12 @@ public class CallAudioRouteStateMachine extends StateMachine {
                         return HANDLED;
                     }
                     setSpeakerphoneOn(true);
-                    // fall through
-                case SPEAKER_ON:
                     transitionTo(mActiveSpeakerRoute);
+                    return HANDLED;
+                case SPEAKER_ON:
+                    if (isSpeakerPhoneOn()) {
+                        transitionTo(mActiveSpeakerRoute);
+                    }
                     return HANDLED;
                 case SPEAKER_OFF:
                     return HANDLED;
@@ -1251,11 +1264,7 @@ public class CallAudioRouteStateMachine extends StateMachine {
                     // Expected, since we just transitioned here
                     return HANDLED;
                 case SPEAKER_OFF:
-                    // Check if we already requested to connect to other devices and just waiting
-                    // for their response. In some cases, this SPEAKER_OFF message may come in
-                    // before the response, we can just ignore the message here to not re-evaluate
-                    // the baseline route incorrectly
-                    if (!mBluetoothRouteManager.isBluetoothAudioConnectedOrPending()) {
+                    if (!isSpeakerPhoneOn()) {
                         sendInternalMessage(SWITCH_BASELINE_ROUTE, INCLUDE_BLUETOOTH_IN_BASELINE);
                     }
                     return HANDLED;
@@ -1341,9 +1350,12 @@ public class CallAudioRouteStateMachine extends StateMachine {
                     // Nothing to do
                     return HANDLED;
                 case DISCONNECT_DOCK:
-                    // Fall-through; same as if speaker goes off, we want to switch baseline.
-                case SPEAKER_OFF:
                     sendInternalMessage(SWITCH_BASELINE_ROUTE, INCLUDE_BLUETOOTH_IN_BASELINE);
+                    return HANDLED;
+                case SPEAKER_OFF:
+                    if (!isSpeakerPhoneOn()) {
+                        sendInternalMessage(SWITCH_BASELINE_ROUTE, INCLUDE_BLUETOOTH_IN_BASELINE);
+                    }
                     return HANDLED;
                 case SWITCH_FOCUS:
                     if (msg.arg1 == ACTIVE_FOCUS || msg.arg1 == RINGING_FOCUS) {
@@ -2095,4 +2107,12 @@ public class CallAudioRouteStateMachine extends StateMachine {
 
         return base;
     }
+
+    private boolean isSpeakerPhoneOn() {
+        if (mAudioManager == null) return false;
+        boolean isOn = mAudioManager.isSpeakerphoneOn();
+        Log.d(this, "isSpeakerPhoneOn: " + isOn);
+        return isOn;
+    }
+
 }
