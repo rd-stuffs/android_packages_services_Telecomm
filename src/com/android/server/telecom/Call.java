@@ -1134,6 +1134,7 @@ public class Call implements CreateConnectionResponse, EventManager.Loggable,
         return (!mIsTransactionalCall ? mConnectionService : mTransactionalService);
     }
 
+    @VisibleForTesting
     public int getState() {
         return mState;
     }
